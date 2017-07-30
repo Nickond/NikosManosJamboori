@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Mechanics;
 
 public class ProjectilePattern : MonoBehaviour
 {
@@ -11,9 +12,12 @@ public class ProjectilePattern : MonoBehaviour
     public float arc; // Arc in degrees
     public int pCount;
     public float pSpeed;
+    public bool enableBoost;
+    public float boostAmount = 2f;
+    public float boostDecay = 0.1f;
     private float current; // Current time
     private bool onCooldown;
-
+    
     // Initialise
 	void Start () 
     {
@@ -34,10 +38,13 @@ public class ProjectilePattern : MonoBehaviour
 
             current += Time.deltaTime; // Add frame time to current time
 
-            if(current >= 1 / RoF)
+            if (RoF > 0f)
             {
-                // current exceeded the rate of fire, prepare to fire again
-                onCooldown = false;
+                if (current >= 1 / RoF)
+                {
+                    // current exceeded the rate of fire, prepare to fire again
+                    onCooldown = false;
+                }
             }
 
         }
@@ -65,8 +72,14 @@ public class ProjectilePattern : MonoBehaviour
             // Name the object
             pObj.name = "Projectile";
 
+            // Boost calculations
+            Boost _boost = null;
+
+            if(enableBoost)
+                _boost = new Boost(boostAmount, boostDecay);
+
             // Initialise projectile
-            pObj.GetComponent<Projectile>().Initialise(targetDir, pSpeed, 7.5f, ParticleMaterials[matSelection]);
+            pObj.GetComponent<Projectile>().Initialise(targetDir, pSpeed, _boost, 7.5f, ParticleMaterials[matSelection]);
             // Apply mat
             
         }

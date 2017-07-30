@@ -1,10 +1,12 @@
-﻿Shader "Unlit/Texture_Colour"
+﻿Shader "Unlit/Texture_Colour_Decal"
 {
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
         _Colour ("Colour", Color) = (1,1,1,1)
-
+        _EmissionColour("Emission", Color) = (0,0,0)
+        _EmissionMap("Emission Texture", 2D) = "white" {}
+        _Blend ("Blend Amount", Range(0,1)) = 0
 	}
 	SubShader
 	{
@@ -13,8 +15,7 @@
 
         Blend SrcAlpha OneMinusSrcAlpha
         ColorMask RGB
-        Lighting Off 
-		ZWrite Off
+        Cull Off Lighting Off ZWrite On
         
 		Pass
 		{
@@ -43,8 +44,11 @@
 			};
 
 			sampler2D _MainTex;
+            sampler2D _EmissionMap;
 			float4 _MainTex_ST;
 			fixed4 _Colour;
+            fixed4 _EmissionColour;
+            float _Blend;
             
 			v2f vert (appdata v)
 			{
@@ -60,6 +64,12 @@
 			{
                 // sample the texture
 				fixed4 col = tex2D(_MainTex, i.uv) * _Colour;// + emCol;
+                half4 dCol = tex2D(_EmissionMap, i.uv) * _EmissionColour;
+                
+                col.rgb = lerp(col.rgb, dCol.rgb, dCol.a);
+                
+                //col = col + emCol;
+                //col = lerp(col, emCol, _Blend);
                 
 				// apply fog
 				UNITY_APPLY_FOG(i.fogCoord, col);

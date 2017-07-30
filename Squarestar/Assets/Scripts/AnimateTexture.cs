@@ -8,6 +8,7 @@ public class AnimateTexture : MonoBehaviour
     private float current;
 
     // private int[] bounds = new int[2];
+    public string textureName;
     public int frames = 6;
     public int rows;
     public int columns;
@@ -23,12 +24,15 @@ public class AnimateTexture : MonoBehaviour
 
         mRend.material = animatedMat;
 
+        if (textureName == "")
+            textureName = "_MainTex";
+
         // Get the texture bounds
         // bounds[0] = animatedMat.mainTexture.width;
         // bounds[1] = animatedMat.mainTexture.height;
 
-        animatedMat.SetTextureOffset("_MainTex", new Vector2(0, 0));
-        animatedMat.SetTextureScale("_MainTex", new Vector2(1f / rows, 1f / columns));
+        animatedMat.SetTextureOffset(textureName, new Vector2(0, 0));
+        animatedMat.SetTextureScale(textureName, new Vector2(1f / rows, 1f / columns));
 
         step = 1f / rows;
         current = 0;
@@ -48,7 +52,7 @@ public class AnimateTexture : MonoBehaviour
                 if (current >= 1)
                     current = 0;
 
-                animatedMat.SetTextureOffset("_MainTex", new Vector2(current, 0));
+                animatedMat.SetTextureOffset(textureName, new Vector2(current, 0));
 
                 current += step;
                 elapsedTime = 0f;

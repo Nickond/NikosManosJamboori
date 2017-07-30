@@ -18,12 +18,20 @@ public class MoveBetweenPoints : MonoBehaviour
     public float distance; // Distance to be moved
     public Vector3 startPoint, endPoint;
     public float speed; // Speed of movement
+
+    public bool pauseAtEnd;     // Pause at checkpoints
+    public float pauseSeconds;  // Pause Amount
+    private bool paused;        // Paused flag
+    private float pausedTime;   // Time of the initial pause
+
     private Vector3 sPoint, ePoint;
     private float distanceCovered;
     private float distanceFraction;
     private float startTime;
-    //private float sModifier = 1f; // speed modifier
-    //private Vector3 prevPos;
+
+    // Ugh...
+    private bool pos = true;
+    private float speedMod = 1f;
 
 	// Initialise
 	void Start () 
@@ -56,31 +64,106 @@ public class MoveBetweenPoints : MonoBehaviour
         startTime = Time.time;
 	}
 
+    
     // Update (Will be changed!)
     void Update()
     {
-        distanceCovered = (Time.time - startTime) * speed;
-        distanceFraction = distanceCovered / distance;
+        // distanceCovered = (Time.time - startTime) * speed;
+        // distanceFraction = distanceCovered / distance;
 
+        // Paused
+        if(paused && pauseAtEnd)
+        {
+            if(Time.time - pausedTime >= pauseSeconds)
+                paused = false;
+            else
+                return;
+        }
 
         // Interpolate between the two points
-        transform.position = Vector3.Lerp(sPoint, ePoint, distanceFraction);
+        transform.position += (ePoint - sPoint).normalized * speed * Time.deltaTime;
+        // transform.position = Vector3.Lerp(sPoint, ePoint, distanceFraction);
 
+        if(ChangeDirection())
+        {
+            if(pauseAtEnd)
+            {
+                pausedTime = Time.time;
+                paused = true;
+            }
+        }
+    }
+
+    private bool ChangeDirection()
+    {
         // Reverse on End reached:
-        if(transform.position == endPoint)
+        if (pos)
         {
-            startTime = Time.time;
-            sPoint = endPoint;
-            ePoint = startPoint;
+            // if(transform.position == endPoint)
+            if (PointReachedSingleAxisMove(endPoint))
+            {
+                startTime = Time.time;
+                sPoint = endPoint;
+                ePoint = startPoint;
+
+                pos = false;
+
+                return true;
+            }
+        }
+        else if (!pos)
+        {
+            // Reverse on Start reached:
+            // if(transform.position == startPoint)
+            if (PointReachedSingleAxisMove(startPoint))
+            {
+                startTime = Time.time;
+                sPoint = startPoint;
+                ePoint = endPoint;
+
+                pos = true;
+
+                return true;
+            }
         }
 
-        // Reverse on Start reached:
-        if(transform.position == startPoint)
+        return false;
+    }
+
+
+    /// <summary>
+    /// The object has reached the specified point.
+    /// </summary>
+    /// <returns></returns>
+    private bool PointReachedSingleAxisMove(Vector3 _point)
+    {
+        float moveAxis = 0f;
+        float pointAxis = 0f;
+        // Cancer:
+        switch(axis)
         {
-            startTime = Time.time;
-            sPoint = startPoint;
-            ePoint = endPoint;
+            case Axis.X:
+                moveAxis  = transform.position.x;
+                pointAxis = _point.x;
+                break;
+            case Axis.Y:
+                moveAxis  = transform.position.y;
+                pointAxis = _point.y;
+                break;
+            case Axis.Z:
+                moveAxis  = transform.position.z;
+                pointAxis = _point.z;
+                break;
         }
+
+        // Debug.Log("M: " + moveAxis + " P: " + pointAxis);
+
+        if (Mathf.Abs(moveAxis) >= Mathf.Abs(pointAxis))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -116,7 +199,6 @@ public class MoveBetweenPoints : MonoBehaviour
                 break;
         }
 
-        axisVec *= Mathf.Sign(distance);
 
         return axisVec; // Return the vector
     }

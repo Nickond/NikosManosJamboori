@@ -2,8 +2,8 @@
 {
 	Properties
 	{
-		_MainTex ("Texture", 2D) = "white" {}
-        _DecalTex ("Texture", 2D) = "black" {} 
+		_MainTex ("Main Texture", 2D) = "white" {}
+        _DecalTex ("Decal Texture", 2D) = "black" {} 
         _Colour ("Main Colour", Color) = (1,1,1,1)
         _DecalColour ("Decal Colour", Color) = (1,1,1,1)
 	}
@@ -12,10 +12,10 @@
 		Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
 		LOD 200
 
-        Blend SrcAlpha OneMinusSrcAlpha
-        ColorMask RGB
+        //Blend SrcAlpha OneMinusSrcAlpha
+        //ColorMask RGB
         Lighting Off 
-        ZWrite On
+        //ZWrite On
         
 		Pass
 		{
@@ -31,6 +31,7 @@
 			{
 				float4 vertex : POSITION;
 				float2 uv : TEXCOORD0;
+				float2 d_uv : TEXCOORD1;
 			};
 
 			struct v2f
@@ -47,12 +48,14 @@
             fixed4 _Colour;
             fixed4 _DecalColour;
 			float4 _MainTex_ST;
+			float4 _DecalTex_ST;
 			
 			v2f vert (appdata v)
 			{
 				v2f o;
 				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+				o.d_uv = TRANSFORM_TEX(v.d_uv, _DecalTex);
 				UNITY_TRANSFER_FOG(o,o.vertex);
 				return o;
 			}
@@ -60,7 +63,7 @@
 			fixed4 frag (v2f i) : SV_Target
 			{
 				// sample the texture
-				fixed4 col = tex2D(_MainTex, i.uv) * _Colour;
+				/*fixed4 col = tex2D(_MainTex, i.uv) * _Colour;
                 fixed4 dCol = tex2D(_DecalTex, i.d_uv) * _DecalColour;
                 
                 fixed4 c =  tex2D( _MainTex, i.uv ) * _Colour + 1 * tex2D( _DecalTex, i.uv ) * _DecalColour;
@@ -68,11 +71,16 @@
                 //dCol.rgb = lerp(dCol.rgb, col.rgb, col.a);
                 col.rgb = lerp(col.rgb, dCol.rgb, dCol.a);
                 
-                c.rgb *= 5;
+                c.rgb *= 5;*/
+
+				fixed4 mainCol = tex2D(_MainTex, i.uv) * _Colour;
+                half4 dCol	   = tex2D(_DecalTex, i.d_uv) * _DecalColour;
                 
+				mainCol.rgb = lerp(mainCol.rgb, dCol.rgb, dCol.a);
+
 				// apply fog
 				UNITY_APPLY_FOG(i.fogCoord, col);
-				return c;
+				return mainCol;
 			}
 			ENDCG
 		}

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Mechanics;
 
 public class Projectile : MonoBehaviour 
 {
@@ -10,13 +11,20 @@ public class Projectile : MonoBehaviour
     private float time;
     private float lifetime;
     private float speed;
+    private float trueSpeed;
     private bool initialised;
+    private Boost boost;
+    private float boostDecay = 0.01f;
 
-    public void Initialise(Vector3 _dir, float _speed, float _lifetime = 20f, Material _mat = null)
+    public void Initialise(Vector3 _dir, float _speed, Boost _boost = null, float _lifetime = 20f, Material _mat = null)
     {
         direction = _dir;
-        speed     = _speed;
+        speed     = trueSpeed = _speed;
         lifetime  = _lifetime;
+        boost     = _boost;
+
+        if (boost != null)
+            speed *= boost.Amount; // Double the speed
 
         if (_mat != null)
             GetComponent<MeshRenderer>().material = new Material(_mat);
@@ -40,6 +48,17 @@ public class Projectile : MonoBehaviour
                 transform.rotation = Quaternion.LookRotation(transform.position - prevPos);
 
             prevPos = transform.position; // Store previous position
+
+            // Boost:
+            if(boost != null)
+            {
+                speed -= boost.DecayRate;
+                if(speed <= trueSpeed)
+                {
+                    speed = trueSpeed;
+                    boost = null;
+                }
+            }
 
             time += Time.deltaTime; // Advance time
 
